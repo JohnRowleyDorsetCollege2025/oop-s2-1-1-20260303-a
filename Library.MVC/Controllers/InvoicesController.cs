@@ -10,22 +10,23 @@ using Library.MVC.Data;
 
 namespace Library.MVC.Controllers
 {
-    public class ProductsController : Controller
+    public class InvoicesController : Controller
     {
         private readonly ApplicationDbContext _context;
 
-        public ProductsController(ApplicationDbContext context)
+        public InvoicesController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: Products
+        // GET: Invoices
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products.ToListAsync());
+            var applicationDbContext = _context.Invoices.Include(i => i.Customer);
+            return View(await applicationDbContext.ToListAsync());
         }
 
-        // GET: Products/Details/5
+        // GET: Invoices/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -33,39 +34,42 @@ namespace Library.MVC.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
+            var invoice = await _context.Invoices
+                .Include(i => i.Customer)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (product == null)
+            if (invoice == null)
             {
                 return NotFound();
             }
 
-            return View(product);
+            return View(invoice);
         }
 
-        // GET: Products/Create
+        // GET: Invoices/Create
         public IActionResult Create()
         {
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Name");
             return View();
         }
 
-        // POST: Products/Create
+        // POST: Invoices/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,UnitPrice")] Product product)
+        public async Task<IActionResult> Create([Bind("Id,InvoiceDate,CustomerId")] Invoice invoice)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(product);
+                _context.Add(invoice);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(product);
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Name", invoice.CustomerId);
+            return View(invoice);
         }
 
-        // GET: Products/Edit/5
+        // GET: Invoices/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -73,22 +77,23 @@ namespace Library.MVC.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice == null)
             {
                 return NotFound();
             }
-            return View(product);
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Name", invoice.CustomerId);
+            return View(invoice);
         }
 
-        // POST: Products/Edit/5
+        // POST: Invoices/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Name,UnitPrice")] Product product)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,InvoiceDate,CustomerId")] Invoice invoice)
         {
-            if (id != product.Id)
+            if (id != invoice.Id)
             {
                 return NotFound();
             }
@@ -97,12 +102,12 @@ namespace Library.MVC.Controllers
             {
                 try
                 {
-                    _context.Update(product);
+                    _context.Update(invoice);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!ProductExists(product.Id))
+                    if (!InvoiceExists(invoice.Id))
                     {
                         return NotFound();
                     }
@@ -113,10 +118,11 @@ namespace Library.MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(product);
+            ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "Name", invoice.CustomerId);
+            return View(invoice);
         }
 
-        // GET: Products/Delete/5
+        // GET: Invoices/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -124,34 +130,35 @@ namespace Library.MVC.Controllers
                 return NotFound();
             }
 
-            var product = await _context.Products
+            var invoice = await _context.Invoices
+                .Include(i => i.Customer)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (product == null)
+            if (invoice == null)
             {
                 return NotFound();
             }
 
-            return View(product);
+            return View(invoice);
         }
 
-        // POST: Products/Delete/5
+        // POST: Invoices/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            var invoice = await _context.Invoices.FindAsync(id);
+            if (invoice != null)
             {
-                _context.Products.Remove(product);
+                _context.Invoices.Remove(invoice);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool ProductExists(int id)
+        private bool InvoiceExists(int id)
         {
-            return _context.Products.Any(e => e.Id == id);
+            return _context.Invoices.Any(e => e.Id == id);
         }
     }
 }
